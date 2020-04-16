@@ -104,12 +104,13 @@ void Padding() {
 	bitplain += "1";
 }
 
+row B[5][5];
+row C[5];
+row D[5];
+row tmp; 
 void Round(StateArray &A, int round_num) {
-	row B[5][5];
-	row C[5];
-	row D[5];
-	row tmp; 
 	/* theta step */
+	for (int x = 0; x < 5; x++) C[x].reset();
 	for (int x = 0; x < 5; x++) 
 		for (int y = 0; y < 5; y++) C[x] ^= A.lane[x][y];
 	for (int x = 0; x < 5; x++) {
@@ -137,14 +138,13 @@ void Round(StateArray &A, int round_num) {
 void Sponge_with_Keccak_f_1600() {
 	Padding();
 	StateArray A;
-	row tmprow;
 	int n = bitplain.length()/BLOCK_SIZE;
 	for (int i = 0; i < n; i++) {
 		for (int j = 0; j < BLOCK_SIZE/Size; j++) {
-			std::string tmp = bitplain.substr(i*BLOCK_SIZE+j*Size,Size);
-			reverse(tmp.begin(),tmp.end());
-			tmprow.write(BIT(tmp));
-			A.lane[S2Ax[j]][S2Ay[j]]^=tmprow;
+			std::string tmps = bitplain.substr(i*BLOCK_SIZE+j*Size,Size);
+			reverse(tmps.begin(),tmps.end());
+			tmp.write(BIT(tmps));
+			A.lane[S2Ax[j]][S2Ay[j]]^=tmp;
 		}
 		/* Step Mappings */ 
 		for (int itr = 0; itr < ROUND_NUM; itr++) Round(A, itr); 
