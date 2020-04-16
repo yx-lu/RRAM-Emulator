@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 #include "rram_allocator.h"
 
 const int ROUND_NUM = 24;
@@ -33,6 +34,13 @@ row rRC[ROUND_NUM];
 struct StateArray {row lane[5][5];};
 typedef BIT State[25];
 
+void output(const BIT &bits) {
+	unsigned long long tmp = bits.to_ullong();
+	for (int i = 0; i < Size/8; i++) {
+		printf("%02x",(unsigned int)(tmp&0xFF));
+		tmp>>=8;
+	}
+}
 
 BIT shifter_bit[Size];
 RRAM shifter;
@@ -80,7 +88,6 @@ void Padding() {
 }
 
 void Round(StateArray &A, int round_num) {
-	std::cout<<round_num<<std::endl;
 	row B[5][5];
 	row C[5];
 	row D[5];
@@ -120,24 +127,12 @@ void Keccak_f_1600(State &S) {
 	for (int x = 0; x < 5; x++) 
 		for (int y = 0; y < 5; y++)
 			A.lane[x][y].write(S[5*y+x]);
-	/*for (int y = 0; y < 5; y++) 
-		for (int x = 0; x < 5; x++) {
-			std::cout<<x<<" "<<y<<" "<<A.lane[x][y].read().to_string()<<std::endl;
-		}*/
-	/* Step Mappings */
-	for (int i = 0; i < ROUND_NUM; i++) Round(A, i);
+	/* Step Mappings */ 
+	for (int i = 0; i < ROUND_NUM; i++) Round(A, i); 
 	/* StateArray -> State */
 	for (int x = 0; x < 5; x++) 
 		for (int y = 0; y < 5; y++)
 			S[5*y+x] = A.lane[x][y].read();
-}
-
-void output(const BIT &bits) {
-	unsigned long long tmp = bits.to_ullong();
-	for (int i = 0; i < Size/8; i++) {
-		printf("%02x",(unsigned int)(tmp&0xFF));
-		tmp>>=8;
-	}
 }
 
 void Sponge() {
@@ -145,9 +140,10 @@ void Sponge() {
 	int n = bitplain.length()/BLOCK_SIZE;
 	State S;
 	for (int i = 0; i < n; i++) {
-		printf("%d\n",i);
 		for (int j = 0; j < BLOCK_SIZE/Size; j++) {
-			BIT now(bitplain.substr(i*BLOCK_SIZE+j*Size,Size));
+			std::string tmp = bitplain.substr(i*BLOCK_SIZE+j*Size,Size);
+			reverse(tmp.begin(),tmp.end());
+			BIT now(tmp);
 			S[j]^=now;
 		}
 		Keccak_f_1600(S);
@@ -160,12 +156,12 @@ void Sponge() {
 int main()
 {
 	freopen("plain.txt", "r", stdin);
-	//freopen("SHA3-512-cipher.txt", "w", stdout);
+	freopen("SHA3-512-cipher.txt", "w", stdout);
 	
 	Initializer();
 	Plaintext_Input();
 	Sponge();
-	//Printinfo(stdout);
+	Printinfo(stdout);
 	
 	return 0;
 	
