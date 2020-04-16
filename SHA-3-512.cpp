@@ -57,23 +57,23 @@ void output(const BIT &bits) {
 }
 
 BIT shifter_bit[Size];
-RRAM shifter[Size];
+RRAM *shifter[Size];
 void Initializer() {
 	for (int i = 0; i < Size; i++) shifter_bit[i].set(i);
-	shifter[0] = RRAM(shifter_bit);
+	shifter[0] = new RRAM(shifter_bit);
 	for (int d = 0; d < Size - 1; d++) {
 		for (int i = 0; i < Size; i++) shifter_bit[i]>>=1;
 		shifter_bit[d].set(Size-1);
-		shifter[d+1] = RRAM(shifter_bit);
+		shifter[d+1] = new RRAM(shifter_bit);
 	}
 	
 	for (int i = 0; i < ROUND_NUM; i++) rRC[i].write(RC[i]);
 }
 void shift(int d, row &r1, row &r2) {
 	r1.fr->line2buf(r1.fore);
-	trans_buf(*r1.fr, shifter[d]);
-	shifter[d].mult();
-	trans_buf(shifter[d],*r2.fr);
+	trans_buf(*r1.fr, *shifter[d]);
+	shifter[d]->mult();
+	trans_buf(*shifter[d], *r2.fr);
 	r2.fr->buf2line(r2.fore);
 	r2.fr->lineset(r2.back);
 	r2.fr->lineop(r2.back,r2.fore);
@@ -144,38 +144,6 @@ void Round(StateArray &A, int round_num) {
 	/* iota step */
 	A.lane[0][0]^=rRC[round_num];
 }
- 
-void Keccak_f_1600(State &S) {
-	/* State -> StateArray */
-	StateArray A;
-	for (int x = 0; x < 5; x++) 
-		for (int y = 0; y < 5; y++)
-			A.lane[x][y].write(S[5*y+x]);
-	/* Step Mappings */ 
-	for (int i = 0; i < ROUND_NUM; i++) Round(A, i); 
-	/* StateArray -> State */
-	for (int x = 0; x < 5; x++) 
-		for (int y = 0; y < 5; y++)
-			S[5*y+x] = A.lane[x][y].read();
-}
- 
-void Sponge() {
-	Padding();
-	int n = bitplain.length()/BLOCK_SIZE;
-	State S;
-	for (int i = 0; i < n; i++) {
-		for (int j = 0; j < BLOCK_SIZE/Size; j++) {
-			std::string tmp = bitplain.substr(i*BLOCK_SIZE+j*Size,Size);
-			reverse(tmp.begin(),tmp.end());
-			BIT now(tmp);
-			S[j]^=now;
-		}
-		Keccak_f_1600(S);
-	}
-	
-	/* Output */
-	for (int i = 0; i < OUTPUT_LENGTH / Size; i++) output(S[i]); puts("");
-}
 
 void Sponge_with_Keccak_f_1600() {
 	Padding();
@@ -200,11 +168,10 @@ void Sponge_with_Keccak_f_1600() {
 int main()
 {
 	freopen("plain.txt", "r", stdin);
-	//freopen("SHA3-512-cipher.txt", "w", stdout);
+	freopen("SHA3-512-cipher.txt", "w", stdout);
 	
 	Initializer();
 	Plaintext_Input();
-	//Sponge();
 	Sponge_with_Keccak_f_1600(); 
 	puts(""); 
 	Printinfo(stdout);
