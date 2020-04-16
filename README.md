@@ -4,19 +4,19 @@
 
 ## rram.h
 
-rram.h实现了一个rram的基本功能, 假设大小为$512*512$
+rram.h实现了一个rram的基本功能, 假设大小为64*64
 
 ### rram块的抽象
 
-* data是一个512*512bit的存储空间, 任何两行两列都可以做x&=!y
+* data是一个64*64bit的存储空间, 任何两行两列都可以做x&=!y
 * x是一个input buffer, 写入data的数据需要经过x
 * y是一个output buffer, 从data读出的数据需要经过y
-* lp是一个512bit的数组, 表示在做行并行的时候并行执行哪些列上的内容, 默认值为全1
-* cp是一个512bit的数组, 表示在做列并行的时候并行执行哪些行上的内容, 默认值为全1
+* lp是一个64bit的数组, 表示在做行并行的时候并行执行哪些列上的内容, 默认值为全1
+* cp是一个64bit的数组, 表示在做列并行的时候并行执行哪些行上的内容, 默认值为全1
 
 ### 支持运算的解释
 
-(BIT被定义为类型bitset<512>)
+(BIT被定义为类型bitset<64>)
 
 (LP集合指lp值为1的下标的集合, CP集合同理)
 
@@ -36,7 +36,7 @@ rram.h实现了一个rram的基本功能, 假设大小为$512*512$
     * void lineop(int i,int j1,int j2): $\forall k\in LP,data[i][k]\&=(!data[j1][k])\&(!data[j2][k])$
     * void columnop(int i,int j): $\forall k\in CP,data[k][i]\&=!data[k][j]$
     * void columnop(int i,int j1,int j2): $\forall k\in CP,data[k][i]\&=(!data[k][j1])\&(!data[k][j2])$
-    * void mult(): $\forall i,y[i]=x\&data[i].any();$
+    * void mult(): $\forall i,y[i]=(x\&data[i]).any();$
 * 缓冲区操作
     * void line2buf(int i): 把行i复制给y
     * void column2buf(int i): 把列i复制给y
@@ -69,7 +69,7 @@ rram.h实现了一个rram的基本功能, 假设大小为$512*512$
 
 一个简单的rram调度器, 使你可以不再直接面对rram进行操作.
 
-其核心是一个称为row​的类型, 程序员可以将他看做一个大小为512bit的向量. 而其本质上是某一个rram的两个行, 分别存储这个向量和这个向量取反.
+其核心是一个称为row​的类型, 程序员可以将他看做一个大小为64bit的向量. 而其本质上是某一个rram的两个行, 分别存储这个向量和这个向量取反.
 
 ### 支持运算的解释
 
@@ -85,7 +85,7 @@ rram.h实现了一个rram的基本功能, 假设大小为$512*512$
 * void operator &=(const row &y): x&=y
 * void operator ^=(const row &y): x^=y
 
-###高级使用
+### 高级使用
 
 绝大多数情况下你不需要关心一个row内部是如何工作的, 不过在某些情况下你不得不直接面对row中的rram指针进行操作(比如说你想调用一个矩阵向量乘法因此要做rram块之间的数据迁移). 所以得知row内部究竟是什么是有益的.
 
