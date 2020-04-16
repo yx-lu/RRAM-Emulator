@@ -14,6 +14,20 @@ const int roffset[5][5] =
   {28,55,25,21,56},
   {27,20,39, 8,14}
 };
+const int S2Ax[25] = {
+	0, 1, 2, 3, 4,
+	0, 1, 2, 3, 4,
+	0, 1, 2, 3, 4,
+	0, 1, 2, 3, 4,
+	0, 1, 2, 3, 4
+};
+const int S2Ay[25] = {
+	0, 0, 0, 0, 0,
+	1, 1, 1, 1, 1,
+	2, 2, 2, 2, 2,
+	3, 3, 3, 3, 3,
+	4, 4, 4, 4, 4
+};
 
 const BIT RC[ROUND_NUM] = {
 	0x0000000000000001ULL,0x0000000000008082ULL,
@@ -105,11 +119,12 @@ void Round(StateArray &A, int round_num) {
 	row B[5][5];
 	row C[5];
 	row D[5];
+	row tmp; 
 	/* theta step */
 	for (int x = 0; x < 5; x++) 
 		for (int y = 0; y < 5; y++) C[x] ^= A.lane[x][y];
 	for (int x = 0; x < 5; x++) {
-		row tmp; shift(1,C[(x+1)%5],tmp);
+		shift(1,C[(x+1)%5],tmp);
 		D[x] = deepcopy(C[(x+4)%5]);
 		D[x] ^= tmp;
 	}
@@ -129,7 +144,7 @@ void Round(StateArray &A, int round_num) {
 	/* iota step */
 	A.lane[0][0]^=rRC[round_num];
 }
-
+ 
 void Keccak_f_1600(State &S) {
 	/* State -> StateArray */
 	StateArray A;
@@ -143,7 +158,7 @@ void Keccak_f_1600(State &S) {
 		for (int y = 0; y < 5; y++)
 			S[5*y+x] = A.lane[x][y].read();
 }
-
+ 
 void Sponge() {
 	Padding();
 	int n = bitplain.length()/BLOCK_SIZE;
@@ -162,6 +177,26 @@ void Sponge() {
 	for (int i = 0; i < OUTPUT_LENGTH / Size; i++) output(S[i]); puts("");
 }
 
+void Sponge_with_Keccak_f_1600() {
+	Padding();
+	StateArray A;
+	row tmprow;
+	int n = bitplain.length()/BLOCK_SIZE;
+	for (int i = 0; i < n; i++) {
+		for (int j = 0; j < BLOCK_SIZE/Size; j++) {
+			std::string tmp = bitplain.substr(i*BLOCK_SIZE+j*Size,Size);
+			reverse(tmp.begin(),tmp.end());
+			tmprow.write(BIT(tmp));
+			A.lane[S2Ax[j]][S2Ay[j]]^=tmprow;
+		}
+		/* Step Mappings */ 
+		for (int itr = 0; itr < ROUND_NUM; itr++) Round(A, itr); 
+	}
+	
+	/* Output */
+	for (int i = 0; i < OUTPUT_LENGTH / Size; i++) output(A.lane[S2Ax[i]][S2Ay[i]].read()); puts("");
+}
+
 int main()
 {
 	freopen("plain.txt", "r", stdin);
@@ -169,7 +204,8 @@ int main()
 	
 	Initializer();
 	Plaintext_Input();
-	Sponge();
+	//Sponge();
+	Sponge_with_Keccak_f_1600(); 
 	puts(""); 
 	Printinfo(stdout);
 	
