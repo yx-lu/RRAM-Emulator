@@ -46,7 +46,6 @@ const BIT RC[ROUND_NUM] = {
 row rRC[ROUND_NUM];
 
 struct StateArray {row lane[5][5];};
-typedef BIT State[25];
 
 void output(const BIT &bits) {
 	unsigned long long tmp = bits.to_ullong();
@@ -115,7 +114,8 @@ void Round(StateArray &A, int round_num) {
 		for (int y = 0; y < 5; y++) C[x] ^= A.lane[x][y];
 	for (int x = 0; x < 5; x++) {
 		shift(1,C[(x+1)%5],tmp);
-		D[x] = deepcopy(C[(x+4)%5]);
+		D[x].set();
+		D[x]&=C[(x+4)%5];
 		D[x] ^= tmp;
 	}
 	for (int x = 0; x < 5; x++) 
@@ -127,7 +127,8 @@ void Round(StateArray &A, int round_num) {
 	/* chi step */
 	for (int x = 0; x < 5; x++)
 		for (int y = 0; y < 5; y++) {
-			A.lane[x][y] = deepcopy(B[(x+2)%5][y]);
+			A.lane[x][y].set();
+			A.lane[x][y]&=B[(x+2)%5][y];
 			A.lane[x][y]&=!B[(x+1)%5][y];
 			A.lane[x][y]^=B[x][y];
 		}
