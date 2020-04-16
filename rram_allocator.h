@@ -1,6 +1,7 @@
 #include"rram.h"
 #include<vector>
-const int MAX_USED=RRAM_SIZE-4;
+#include<iostream>
+const int MAX_USED=RRAM_SIZE-8;
 std::vector<RRAM*> pool;
 int lineused=MAX_USED;
 struct row
@@ -27,6 +28,7 @@ struct row
 		fore=y.fore;
 		back=y.back;
 	}
+	static void new_chunk() {RRAM* nw=new RRAM;pool.push_back(nw);lineused=0;}
 	friend row operator !(const row &x)
 	{
 		row y(x);
@@ -101,21 +103,17 @@ struct row
 			transll(*y.fr,y.fore,*fr,RRAM_SIZE-1);
 			yfore=RRAM_SIZE-1;yback=RRAM_SIZE-2;
 			fr->lineset(yback);
-			fr->lineop(back,fore);
+			fr->lineop(yback,yfore);
 		}
 		int z=RRAM_SIZE-3,nz=RRAM_SIZE-4,w=RRAM_SIZE-5,nw=RRAM_SIZE-6;
 		fr->lineset(z);
 		fr->lineop(z,yfore,back);
 		fr->lineset(w);
 		fr->lineop(w,fore,yback);
-		fr->lineset(nz);
-		fr->lineop(nz,z);
-		fr->lineset(nw);
-		fr->lineop(nw,w);
-		fr->lineset(fore);
-		fr->lineop(fore,nz,nw);
 		fr->lineset(back);
-		fr->lineop(back,fore);
+		fr->lineop(back,z,w);
+		fr->lineset(fore);
+		fr->lineop(fore,back);
 		//z=1
 		//z&=!y
 		//z&=x
