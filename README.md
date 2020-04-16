@@ -85,43 +85,20 @@ rram.h实现了一个rram的基本功能, 假设大小为$512*512$
 * void operator &=(const row &y): x&=y
 * void operator ^=(const row &y): x^=y
 
-###实现细节
+###高级使用
 
-```
-x^=y:
-    z=1
-    z&=!y
-    z&=x
-    w=1
-    w&=!x
-    w&=y
-    nz=1
-    nz&=!z
-    nw=1
-    nw&=!w
-    x=1
-    x&=!nz
-    x&=!nw
-    nx=1
-    nx&=x
-----------------
-x&=y
-    x&=!ny
-    nx=1
-    nx&=!x
-----------------
-x|=y
-    nx&=!y
-    x=1
-    x&=!nx
-```
+绝大多数情况下你不需要关心一个row内部是如何工作的, 不过在某些情况下你不得不直接面对row中的rram指针进行操作(比如说你想调用一个矩阵向量乘法因此要做rram块之间的数据迁移). 所以得知row内部究竟是什么是有益的.
 
-## test
+#### row的抽象
 
-### sha3.cpp
+* fr是一个指向某个rram块的指针, 表示当前row的数据存在这个rram块里
+* fore是一个整数, 表示当前row的数据(的真实值)存在哪一行
+* back是一个整数, 表示当前row的数据的**逐位取反**值存在哪一行
 
-### sha2.cpp
+当你想要进行数据的迁移时, 依次使用rram.h中提供的line2buf, trans_buf, buf2line函数(或其中一部分)即可完成, 或者使用rram.h中提供的封装后的transll.
 
-### sha1.cpp
+**警告**: 当你更改一个row中fore的值时, 切记要同时更新其back的值(通过一个lineset接一个lineop).
 
-### md5.cpp
+## SHA-3-512.cpp
+
+一个使用上述库文件完成的求解SHA-3-512哈希的cpp程序.
