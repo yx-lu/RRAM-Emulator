@@ -59,11 +59,11 @@ void shift(int d,BIT &bits) {
 	}
 }
 
-int len;
+int len = 0;
 char plain[MAXLEN];
 std::string bitplain;
 void Plaintext_Input() {
-	while (len<MAXLEN && scanf("%c",&plain[len++])!=EOF);
+	while (len<MAXLEN && scanf("%c",&plain[len])!=EOF) len++;
 	if (len==MAXLEN) {
 		std::cerr << "Error: Input too long. Maximum Length: "
 				  << MAXLEN << std::endl;
@@ -79,6 +79,14 @@ void Padding() {
 		}
 		BIT tmpbit(tmp);
 		bitplain += tmpbit.to_string();
+	}
+	int tmp1 = (len/(Size/8))*(Size/8);
+	if (tmp1 != len) {
+		for (int j = tmp1; j < len; j++) {
+			std::string tmp = std::bitset<8>((unsigned)plain[j]).to_string();
+			reverse(tmp.begin(), tmp.end());
+			bitplain += tmp;
+		}
 	}
 	bitplain += "01";
 	int delta = ((-(int)bitplain.length()-2)%BLOCK_SIZE+BLOCK_SIZE)%BLOCK_SIZE;
