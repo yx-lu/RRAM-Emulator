@@ -43,20 +43,26 @@ void output(const BIT &bits) {
 }
 
 BIT shifter_bit[Size];
-RRAM shifter;
+RRAM shifter[Size];
 void Initializer() {
-	shifter_bit[0].set(Size-1);
-	for (int i = 1; i < Size; i++) shifter_bit[i].set(i-1);
-	shifter = RRAM(shifter_bit);
+	for (int i = 0; i < Size; i++) shifter_bit[i].set(i);
+	shifter[0] = RRAM(shifter_bit);
+	for (int d = 0; d < Size - 1; d++) {
+		for (int i = 0; i < Size - 1; i++) shifter_bit[i]>>=1;
+		shifter_bit[d].set(Size-1);
+		shifter[d+1] = RRAM(shifter_bit);
+	}
 	
 	for (int i = 0; i < ROUND_NUM; i++) rRC[i].write(RC[i]);
 }
-void shift(int d,BIT &bits) {
-	while (d--) {
-		shifter.write_buf(bits);
-		shifter.mult();
-		bits = shifter.read_buf();
-	}
+void shift(int d, row &r1, row &r2) {
+	r1.fr->line2buf(r1.fore);
+	trans_buf(*r1.fr, shifter[d]);
+	shifter[d].mult();
+	trans_buf(shifter[d],*r2.fr);
+	r2.fr->buf2line(r2.fore);
+	r2.fr->lineset(r2.back);
+	r2.fr->lineop(r2.back,r2.fore);
 }
 
 int len = 0;
@@ -103,9 +109,7 @@ void Round(StateArray &A, int round_num) {
 	for (int x = 0; x < 5; x++) 
 		for (int y = 0; y < 5; y++) C[x] ^= A.lane[x][y];
 	for (int x = 0; x < 5; x++) {
-		BIT cshift = C[(x+1)%5].read();
-		shift(1, cshift);
-		row tmp; tmp.write(cshift);
+		row tmp; shift(1,C[(x+1)%5],tmp);
 		D[x] = deepcopy(C[(x+4)%5]);
 		D[x] ^= tmp;
 	}
@@ -113,11 +117,8 @@ void Round(StateArray &A, int round_num) {
 		for (int y = 0; y < 5; y++) A.lane[x][y]^=D[x];
 	/* rho and pi steps */
 	for (int x = 0; x < 5; x++)
-		for (int y = 0; y < 5; y++) {
-			BIT ashift = A.lane[x][y].read(); 
-			shift(roffset[x][y], ashift);
-			B[y][(2*x+3*y)%5].write(ashift);
-		}
+		for (int y = 0; y < 5; y++) 
+			shift(roffset[x][y], A.lane[x][y], B[y][(2*x+3*y)%5]);
 	/* chi step */
 	for (int x = 0; x < 5; x++)
 		for (int y = 0; y < 5; y++) {
@@ -164,7 +165,7 @@ void Sponge() {
 int main()
 {
 	freopen("plain.txt", "r", stdin);
-	freopen("SHA3-512-cipher.txt", "w", stdout);
+	//freopen("SHA3-512-cipher.txt", "w", stdout);
 	
 	Initializer();
 	Plaintext_Input();
