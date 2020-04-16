@@ -92,21 +92,10 @@ void Plaintext_Input() {
 }
 void Padding() {
 	bitplain = "";
-	for (int i = 0; i < len/(Size/8); i++) {
-		unsigned long long tmp = 0;
-		for (int j = (i+1)*(Size/8)-1; j >= i*(Size/8); j--) {
-			tmp<<=8; tmp|=plain[j];
-		}
-		BIT tmpbit(tmp);
-		bitplain += tmpbit.to_string();
-	}
-	int tmp1 = (len/(Size/8))*(Size/8);
-	if (tmp1 != len) {
-		for (int j = tmp1; j < len; j++) {
-			std::string tmp = std::bitset<8>((unsigned)plain[j]).to_string();
-			reverse(tmp.begin(), tmp.end());
-			bitplain += tmp;
-		}
+	for (int i = 0; i < len; i++) {
+		std::string tmp = std::bitset<8>((unsigned)plain[i]).to_string();
+		reverse(tmp.begin(), tmp.end());
+		bitplain += tmp;
 	}
 	bitplain += "01";
 	int delta = ((-(int)bitplain.length()-2)%BLOCK_SIZE+BLOCK_SIZE)%BLOCK_SIZE;
