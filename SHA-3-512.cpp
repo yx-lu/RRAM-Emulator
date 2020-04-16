@@ -48,7 +48,7 @@ void Initializer() {
 	for (int i = 0; i < Size; i++) shifter_bit[i].set(i);
 	shifter[0] = RRAM(shifter_bit);
 	for (int d = 0; d < Size - 1; d++) {
-		for (int i = 0; i < Size - 1; i++) shifter_bit[i]>>=1;
+		for (int i = 0; i < Size; i++) shifter_bit[i]>>=1;
 		shifter_bit[d].set(Size-1);
 		shifter[d+1] = RRAM(shifter_bit);
 	}
@@ -170,6 +170,7 @@ int main()
 	Initializer();
 	Plaintext_Input();
 	Sponge();
+	puts(""); 
 	Printinfo(stdout);
 	
 	return 0;
