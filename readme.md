@@ -102,3 +102,17 @@ rram.h实现了一个rram的基本功能, 假设大小为64*64
 ## SHA-3-512.cpp
 
 一个使用上述库文件完成的求解SHA-3-512哈希的cpp程序.
+
+从plain.txt中读入原文，密文输出在SHA3-512-cipher.txt的第一行，后面的内容是Printinfo输出的关于rram的使用情况
+
+SHA-3-512具体过程可参考[Keccak Team](https://keccak.team/keccak_specs_summary.html)及[SHA-3 Standard](https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.202.pdf)
+
+代码中为了方便使用rram_allocator对过程进行了少量的调整
+
+### 一些变量及函数解释
+
+* shifter[64]：移位用RRAM
+* shift(d,r1,r2)：将row r1中的内容循环左移d位后放入row r2中
+* Padding()：对应SHA3中预处理串时补充的后缀01以及pad10*1函数
+* Round(A,round_num)：对应Standard中的$Rnd(A,i_r)$函数
+* Sponge_with_Keccak_f_1600：对应Standard中的KECCAK[1024]=SPONGE[KECCAK-p[1600,24]], pad10*1, 576]函数
