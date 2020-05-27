@@ -1,6 +1,6 @@
 #include <iostream>
 #include <algorithm>
-#include "rram_allocator.h"
+#include "operation.cpp"
 
 const int ROUND_NUM = 24;
 const int BLOCK_SIZE = 576;
@@ -53,29 +53,6 @@ void output(const BIT &bits) {
 		printf("%02x",(unsigned int)(tmp&0xFF));
 		tmp>>=8;
 	}
-}
-
-BIT shifter_bit[Size];
-RRAM *shifter[Size];
-void Initializer() {
-	for (int i = 0; i < Size; i++) shifter_bit[i].set(i);
-	shifter[0] = new RRAM(shifter_bit);
-	for (int d = 0; d < Size - 1; d++) {
-		for (int i = 0; i < Size; i++) shifter_bit[i]>>=1;
-		shifter_bit[d].set(Size-1);
-		shifter[d+1] = new RRAM(shifter_bit);
-	}
-	
-	for (int i = 0; i < ROUND_NUM; i++) rRC[i].write(RC[i]);
-}
-void shift(int d, row &r1, row &r2) {
-	r1.fr->line2buf(r1.fore);
-	trans_buf(*r1.fr, *shifter[d]);
-	shifter[d]->mult();
-	trans_buf(*shifter[d], *r2.fr);
-	r2.fr->buf2line(r2.fore);
-	r2.fr->lineset(r2.back);
-	r2.fr->lineop(r2.back,r2.fore);
 }
 
 int len = 0;

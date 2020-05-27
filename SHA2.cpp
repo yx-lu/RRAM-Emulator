@@ -1,6 +1,6 @@
 #include <iostream>
 #include <algorithm>
-#include "rram_allocator.h"
+#include "operation.cpp"
 
 const int BLOCK_SIZE = 512;
 const int OUTPUT_LENGTH = 256;
@@ -25,89 +25,6 @@ const unsigned int k[64]={
    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
 };
 
-
-BIT shifter_bit[Size];
-RRAM *shifter[Size];
-
-BIT rotater_bit[Size];
-RRAM *rotater[Size];
-
-BIT left_shifter_bit[Size];
-RRAM *left_shifter;
-void Initializer() {
-	for (int i = 0; i < Size; i++) shifter_bit[i].set(i);
-	shifter[0] = new RRAM(shifter_bit);
-	for (int d = 0; d < Size - 1; d++) {
-		for (int i = 0; i < Size; i++) shifter_bit[i]<<=1;
-		shifter[d+1] = new RRAM(shifter_bit);
-	}
-	
-	for (int i = 0; i < Size; i++) rotater_bit[i].set(i);
-	rotater[0] = new RRAM(rotater_bit);
-	for (int d = 0; d < Size - 1; d++) {
-		for (int i = 0; i < Size; i++) rotater_bit[i]<<=1;
-		rotater_bit[d].set(0);
-		rotater[d+1] = new RRAM(rotater_bit);
-	}
-	for (int i = 0; i < Size-1; i++) left_shifter_bit[i].set(i+1);
-	left_shifter=new RRAM(left_shifter_bit);
-}
-
-void shift(int d, row &r1, row &r2) {
-	r1.fr->line2buf(r1.fore);
-	trans_buf(*r1.fr, *shifter[d]);
-	shifter[d]->mult();
-	trans_buf(*shifter[d], *r2.fr);
-	r2.fr->buf2line(r2.fore);
-	r2.fr->lineset(r2.back);
-	r2.fr->lineop(r2.back,r2.fore);
-}
-
-void rotate(int d, row &r1, row &r2) {
-	r1.fr->line2buf(r1.fore);
-	trans_buf(*r1.fr, *rotater[d]);
-	rotater[d]->mult();
-	trans_buf(*rotater[d], *r2.fr);
-	r2.fr->buf2line(r2.fore);
-	r2.fr->lineset(r2.back);
-	r2.fr->lineop(r2.back,r2.fore);
-}
-
-
-void leftshift(row &r1, row &r2) {
-	r1.fr->line2buf(r1.fore);
-	trans_buf(*r1.fr, *left_shifter);
-	left_shifter->mult();
-	trans_buf(*left_shifter, *r2.fr);
-	r2.fr->buf2line(r2.fore);
-	r2.fr->lineset(r2.back);
-	r2.fr->lineop(r2.back,r2.fore);
-}
-
-void add(row &r1, row &r2){
-	row r3;
-	row r4;
-	row r5;
-	row r6;
-	row r7;
-	r3.set();
-	r4.set();
-	r3&=r1;
-	r4&=r2;	
-	for(int i=0;i<32;++i){
-	r5.set();
-	r6.set();
-	r5&=r3;
-	r5^=r4;
-	r6&=r3;
-	r6&=r4;	
-	leftshift(r6,r4);
-	r3.set();
-	r3&=r5;
-	}
-	r1.set();
-	r1&=r5;
-}
 
 int len = 0;
 char plain[MAXLEN];
